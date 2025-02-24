@@ -105,6 +105,7 @@ func (app *NatsBridgeApp) Start() error {
 			}
 			opts = append(opts, opt)
 		}
+		opts = append(opts, nats.MaxReconnects(-1))
 
 		server.Conn, err = nats.Connect(server.NatsUrl, opts...)
 		if err != nil {
