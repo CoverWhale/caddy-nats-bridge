@@ -31,7 +31,7 @@ func (Request) CaddyModule() caddy.ModuleInfo {
 		New: func() caddy.Module {
 			// Default values
 			return &Request{
-				Timeout:     60 * time.Second,
+				Timeout:     120 * time.Second, // this is for a test
 				ServerAlias: "default",
 			}
 		},
@@ -81,17 +81,18 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 	resp, err := server.Conn.RequestMsg(msg, p.Timeout)
 	if err != nil && errors.Is(err, nats.ErrNoResponders) {
 		w.WriteHeader(http.StatusNotFound)
-		p.logger.Warn("No Responders for NATS subject - answering with HTTP Status Not Found.")
+		p.logger.Warn("No Responders for NATS subject - answering with HTTP Status Not Found", zap.String("subject", subj), zap.Error(err), zap.Duration("timeout", p.Timeout))
 		return nil
 	}
 	p.logger.Debug("nats_request", zap.String("duration", fmt.Sprintf("%d ms", time.Since(start).Milliseconds())))
 	if err != nil && errors.Is(err, nats.ErrTimeout) {
 		w.WriteHeader(http.StatusGatewayTimeout)
-		p.logger.Warn("Request timed out", zap.String("subject", subj))
+		p.logger.Warn("Request timed out", zap.String("subject", subj), zap.Error(err), zap.Duration("timeout", p.Timeout))
 		return nil
 	}
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		p.logger.Warn("Internal nats request error", zap.String("subject", subj), zap.Error(err), zap.Duration("timeout", p.Timeout))
 		return fmt.Errorf("could not request NATS message: %w", err)
 	}
 
