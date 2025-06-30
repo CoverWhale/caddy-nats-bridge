@@ -31,7 +31,7 @@ func (Request) CaddyModule() caddy.ModuleInfo {
 		New: func() caddy.Module {
 			// Default values
 			return &Request{
-				Timeout:     60 * time.Second,
+				Timeout:     300 * time.Second, // Changed for Load Tests.
 				ServerAlias: "default",
 			}
 		},
